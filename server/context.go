@@ -38,7 +38,7 @@ func DownloadFromS3Bucket(item string) (error) {
 
     sess, _ := session.NewSession(&aws.Config{
         Region:      aws.String("us-east-2"),
-        Credentials: credentials.NewSharedCredentials("/home/ubuntu/.aws/credetials", "default"),
+        Credentials: credentials.NewSharedCredentials("/home/ubuntu/.aws/credentials", "default"),
     })
 
     downloader := s3manager.NewDownloader(sess)
