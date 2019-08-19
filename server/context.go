@@ -84,7 +84,7 @@ func newContext(config Config, r *http.Request) (c *context, err error) {
       c.exist = false
     }
 
-    info, e = os.Stat(c.absFilePath)
+    info, e := os.Stat(c.absFilePath)
 
     if e != nil {
         if os.IsNotExist(e) {
