@@ -38,7 +38,7 @@ func DownloadFromS3Bucket(item string) (error) {
 
     sess, _ := session.NewSession(&aws.Config{
         Region:      aws.String("us-east-2"),
-        Credentials: credentials.NewSharedCredentials(),
+        Credentials: credentials.NewSharedCredentials("~/.aws/credetials", "default"),
     })
 
     downloader := s3manager.NewDownloader(sess)
@@ -78,10 +78,11 @@ func newContext(config Config, r *http.Request) (c *context, err error) {
     if err != nil {
         return
     }
-
-    err = DownloadFromS3Bucket(s3Path)
-    if err != nil {
-      c.exist = false
+    if len(s3Path) > 4{
+      err = DownloadFromS3Bucket(s3Path)
+      if err != nil {
+        c.exist = false
+      }
     }
 
     info, e := os.Stat(c.absFilePath)
