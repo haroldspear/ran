@@ -79,14 +79,11 @@ func newContext(config Config, r *http.Request) (c *context, err error) {
         return
     }
 
-    info, e := os.Stat(c.absFilePath)
-    
-    if e != nil {
-      err = DownloadFromS3Bucket(s3Path)
-      if err != nil {
-        c.exist = false
-      }
+    err = DownloadFromS3Bucket(s3Path)
+    if err != nil {
+      c.exist = false
     }
+
     info, e = os.Stat(c.absFilePath)
 
     if e != nil {
