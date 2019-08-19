@@ -7,6 +7,11 @@ import "path/filepath"
 import "strings"
 import "fmt"
 import "net/url"
+import "github.com/aws/aws-sdk-go/aws/session"
+import "github.com/aws/aws-sdk-go/service/s3"
+import "github.com/aws/aws-sdk-go/aws"
+import "github.com/aws/aws-sdk-go/aws/credentials"
+import "github.com/aws/aws-sdk-go/service/s3/s3manager"
 
 
 // context contains information about request path
@@ -21,6 +26,34 @@ type context struct {
                             // indexPath == path.Join(cleanPath, indexName)
 }
 
+func DownloadFromS3Bucket(item string) (error) {
+    bucket := "caddyimages"
+
+    file, err := os.Create(item)
+    if err != nil {
+        fmt.Println(err)
+    }
+
+    defer file.Close()
+
+    sess, _ := session.NewSession(&aws.Config{
+        Region:      aws.String("us-east-2"),
+        Credentials: credentials.NewEnvCredentials(),
+    })
+
+    downloader := s3manager.NewDownloader(sess)
+
+    _, err = downloader.Download(file,
+        &s3.GetObjectInput{
+            Bucket: aws.String(bucket),
+            Key:    aws.String(item),
+        })
+    if err != nil {
+        fmt.Println(err)
+    }
+
+    return err
+}
 
 // String() is used for log output
 func (c *context) String() string {
@@ -39,6 +72,7 @@ func newContext(config Config, r *http.Request) (c *context, err error) {
         requestPath = "/" + requestPath
     }
     c.cleanPath = path.Clean(requestPath)
+    s3Path := c.cleanPath[1:]
 
     c.absFilePath, err = filepath.Abs(filepath.Join(config.Root, c.cleanPath))
     if err != nil {
@@ -46,6 +80,15 @@ func newContext(config Config, r *http.Request) (c *context, err error) {
     }
 
     info, e := os.Stat(c.absFilePath)
+    
+    if e != nil {
+      err = DownloadFromS3Bucket(s3Path)
+      if err != nil {
+        c.exist = false
+      }
+    }
+    info, e = os.Stat(c.absFilePath)
+
     if e != nil {
         if os.IsNotExist(e) {
             c.exist = false
@@ -138,4 +181,3 @@ func (this *context) parent() string {
 
     return u[:i + 1]
 }
-
